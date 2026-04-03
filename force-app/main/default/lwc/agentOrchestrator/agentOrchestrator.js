@@ -1,4 +1,4 @@
-import { LightningElement } from 'lwc';
+import { LightningElement, track } from 'lwc';
 import {
     BRIDGE_VERSION,
     CHANNEL_NAME,
@@ -19,13 +19,52 @@ export default class AgentOrchestrator extends LightningElement {
     _tabId = null;
     _duplicateWarning = false;
     _warningDismissed = false;
+    @track _approvalState = null;
 
     get _showWarning() {
         return this._duplicateWarning && !this._warningDismissed;
     }
 
+    get _showApproval() {
+        return this._approvalState !== null;
+    }
+
+    get _approvalActionName() {
+        return this._approvalState?.actionName || '';
+    }
+
+    get _approvalDescription() {
+        return this._approvalState?.description || '';
+    }
+
+    get _approvalComponentLabel() {
+        return this._approvalState?.componentLabel || '';
+    }
+
+    get _approvalParamSummary() {
+        return this._approvalState?.paramSummary || [];
+    }
+
     handleDismissWarning() {
         this._warningDismissed = true;
+    }
+
+    handleApprove() {
+        if (!this._approvalState) return;
+        const { payload, resolve, reject, timeoutId } = this._approvalState;
+        clearTimeout(timeoutId);
+        this._approvalState = null;
+        this._executeImmediate(payload, Timeout.DANGEROUS_EXECUTE)
+            .then(resolve)
+            .catch(reject);
+    }
+
+    handleReject() {
+        if (!this._approvalState) return;
+        const { reject, timeoutId } = this._approvalState;
+        clearTimeout(timeoutId);
+        this._approvalState = null;
+        reject(new Error('Action rejected by user'));
     }
 
     // ── Lifecycle ──────────────────────────────────────────────────
@@ -47,6 +86,11 @@ export default class AgentOrchestrator extends LightningElement {
             orchestratorId: this._orchestratorId
         });
         this._stopListeningForHandshake();
+        if (this._approvalState) {
+            clearTimeout(this._approvalState.timeoutId);
+            this._approvalState.reject(new Error('Orchestrator disconnected'));
+            this._approvalState = null;
+        }
         if (this._channel) {
             this._channel.close();
             this._channel = null;
@@ -226,27 +270,38 @@ export default class AgentOrchestrator extends LightningElement {
     }
 
     _execute(payload) {
-        const { componentId, actionName, params } = payload;
+        const { componentId, actionName } = payload;
 
         if (!this._registry.has(componentId)) {
             return null;
         }
 
         const componentData = this._registry.get(componentId);
-        if (!componentData.actions.find((a) => a.name === actionName)) {
+        const actionDef = componentData.actions.find((a) => a.name === actionName);
+        if (!actionDef) {
             throw new Error(
                 `Unknown action '${actionName}' on component '${componentId}'`
             );
         }
 
+        if (actionDef.dangerous) {
+            return this._requestApproval(componentData, actionDef, payload);
+        }
+
+        return this._executeImmediate(payload);
+    }
+
+    _executeImmediate(payload, timeoutMs) {
+        const { componentId, actionName, params } = payload;
         const correlationId = generateId();
+        const timeout = timeoutMs || Timeout.EXECUTE;
 
         return new Promise((resolve, reject) => {
             // eslint-disable-next-line @lwc/lwc/no-async-operation
             const timeoutId = setTimeout(() => {
                 this._pendingRequests.delete(correlationId);
                 reject(new Error(`Execution timeout for action '${actionName}'`));
-            }, Timeout.EXECUTE);
+            }, timeout);
 
             this._pendingRequests.set(correlationId, { resolve, reject, timeoutId });
 
@@ -256,6 +311,37 @@ export default class AgentOrchestrator extends LightningElement {
                 actionName,
                 params
             });
+        });
+    }
+
+    // ── Approval Gate ─────────────────────────────────────────────
+
+    _requestApproval(componentData, actionDef, payload) {
+        if (this._approvalState) {
+            clearTimeout(this._approvalState.timeoutId);
+            this._approvalState.reject(new Error('Superseded by new approval request'));
+        }
+
+        return new Promise((resolve, reject) => {
+            // eslint-disable-next-line @lwc/lwc/no-async-operation
+            const timeoutId = setTimeout(() => {
+                this._approvalState = null;
+                reject(new Error(`Approval timeout for action '${actionDef.name}'`));
+            }, Timeout.DANGEROUS_EXECUTE);
+
+            const params = payload.params || {};
+            this._approvalState = {
+                actionName: actionDef.name,
+                description: actionDef.description || '',
+                componentLabel: componentData.label,
+                paramSummary: Object.entries(params).map(
+                    ([key, value]) => ({ key, value: JSON.stringify(value) })
+                ),
+                payload,
+                resolve,
+                reject,
+                timeoutId
+            };
         });
     }
 
