@@ -84,28 +84,35 @@ export default class AgentOrchestrator extends LightningElement {
 
     _checkForDuplicates() {
         const checkId = generateId();
-        let responseCount = 0;
+        const sameTabResponses = [];
 
         const probe = new BroadcastChannel(CHANNEL_NAME);
         probe.onmessage = (event) => {
             const data = event.data;
-            if (data.type === MessageType.RESPONSE && data.id === checkId) {
-                responseCount++;
-                if (responseCount > 1 && data.payload?.tabId === this._tabId) {
-                    this._duplicateWarning = true;
-                    console.warn('AgentOrchestrator: Multiple orchestrators detected in this tab.');
-                }
+            if (data.type === MessageType.RESPONSE && data.id === checkId
+                && data.payload?.tabId === this._tabId) {
+                sameTabResponses.push(data.payload.orchestratorId);
             }
         };
         probe.postMessage({
             type: MessageType.REQUEST,
             id: checkId,
             action: AgentAction.PING,
-            payload: {}
+            payload: {},
+            tabId: this._tabId
         });
 
         // eslint-disable-next-line @lwc/lwc/no-async-operation
-        setTimeout(() => probe.close(), Timeout.DUPLICATE_CHECK);
+        setTimeout(() => {
+            probe.close();
+            const others = sameTabResponses.filter(
+                (id) => id !== this._orchestratorId
+            );
+            if (others.length > 0) {
+                this._duplicateWarning = true;
+                console.warn('AgentOrchestrator: Multiple orchestrators detected in this tab.');
+            }
+        }, Timeout.DUPLICATE_CHECK);
     }
 
     // ── Message Router ─────────────────────────────────────────────
