@@ -1,0 +1,15 @@
+<template>
+    <template lwc:if={_showWarning}>
+        <div class="warning-banner slds-notify slds-notify_alert slds-alert_warning" role="alert">
+            <lightning-icon icon-name="utility:warning" alternative-text="Warning" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+            <span>Agent Bridge: Multiple orchestrators detected on this page. Only one orchestrator should be active. Remove duplicates from Lightning Pages or Utility Bar to avoid unstable behavior.</span>
+            <lightning-button-icon
+                icon-name="utility:close"
+                alternative-text="Close"
+                variant="bare-inverse"
+                onclick={handleDismissWarning}
+                class="slds-m-left_small"
+            ></lightning-button-icon>
+        </div>
+    </template>
+</template>

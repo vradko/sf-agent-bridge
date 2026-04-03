@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>64.0</apiVersion>
+    <isExposed>false</isExposed>
+    <masterLabel>Agent Bridge Mixin</masterLabel>
+    <description>Mixin class for LWC components to register actions with AI Agent Bridge</description>
+</LightningComponentBundle>
