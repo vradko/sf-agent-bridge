@@ -121,8 +121,9 @@ Drop-in component. No configuration needed. Place on a Lightning Page or in Util
 Features:
 - Pull-based discovery (ROLL_CALL → 500ms collection window)
 - Tab-scoped isolation via DOM event handshake (Lightning Web Security compatible)
+- Approval gate for dangerous actions (inline confirmation modal)
 - Duplicate orchestrator detection (shows warning banner)
-- 30s execute timeout
+- 30s execute timeout (60s for dangerous actions after approval)
 - Filters requests by `tabId` when provided (multi-tab safe)
 - Backward compatible — requests without `tabId` are processed by all orchestrators
 
@@ -149,6 +150,27 @@ Include `tabId` in BroadcastChannel requests to target a specific tab. Without i
 
 This approach works within Salesforce Lightning Web Security, which blocks direct `window` property assignment but allows `CustomEvent` on `document`.
 
+### Approval Gate for Dangerous Actions
+
+Actions marked with `dangerous: true` require user confirmation before execution. When the agent calls a dangerous action, the orchestrator shows an inline confirmation modal displaying the action name, component label, and parameters. The agent's request is held until the user clicks **Approve** or **Reject**.
+
+- **Approve** — the action executes with a 60s timeout (instead of the standard 30s)
+- **Reject** — the agent receives an error response: `"Action rejected by user"`
+- Non-dangerous actions are unaffected — zero overhead, immediate execution
+
+```javascript
+// Mark an action as dangerous in your component
+get agentActions() {
+    return [{
+        name: 'deleteRecord',
+        description: 'Permanently deletes the record',
+        dangerous: true,
+        params: [{ name: 'recordId', type: 'string', required: true }],
+        returns: { type: 'object' }
+    }];
+}
+```
+
 ### BroadcastChannel Protocol
 
 **Agent → Orchestrator:**
@@ -158,7 +180,7 @@ This approach works within Salesforce Lightning Web Security, which blocks direc
 
 **Orchestrator → Agent:**
 ```javascript
-{ type: 'response', id: '<uuid>', status: 'ok' | 'error', payload: {} }
+{ type: 'response', id: '<uuid>', status: 'ok' | 'error' | 'pending_approval', payload: {} }
 ```
 
 **Internal (Orchestrator ↔ Widgets):**

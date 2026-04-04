@@ -10,3 +10,33 @@
     padding: 0.5rem 1rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
+
+.approval-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.approval-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.approval-modal .slds-modal__container {
+    background: white;
+    border-radius: 0.25rem;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}

@@ -37,13 +37,15 @@ export const AgentAction = {
 
 export const ResponseStatus = {
     OK: 'ok',
-    ERROR: 'error'
+    ERROR: 'error',
+    PENDING_APPROVAL: 'pending_approval'
 };
 
 // ── Timeouts (ms) ──────────────────────────────────────────────────
 
 export const Timeout = {
     EXECUTE: 30000,
+    DANGEROUS_EXECUTE: 60000,
     ROLL_CALL: 500,
     DUPLICATE_CHECK: 1000
 };
