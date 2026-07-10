@@ -108,11 +108,13 @@ Mixin for any LWC. Override these:
 
 | Member | Type | Required | Description |
 |---|---|---|---|
-| `agentComponentLabel` | getter | Yes | Human-readable name shown in discover |
+| `agentComponentLabel` | getter | Recommended | Human-readable name shown in discover. Defaults to a PascalCase version of the host tag name (`c-my-widget` → `MyWidget`) |
 | `agentActions` | getter | Yes | Array of action definitions |
 | `handleAgentAction(name, params)` | async method | Yes | Executes the action, returns result |
 | `agentStableKey` | getter | No | Stable identifier for dynamic children (see below) |
 | `agentComponentId` | getter | Auto | Unique ID — random UUID or `stable:<label>:<key>` |
+
+> **Pitfall:** if your component defines its own `connectedCallback` / `disconnectedCallback`, you **must** call `super.connectedCallback()` / `super.disconnectedCallback()` inside them — otherwise the component silently never registers with the bridge.
 
 ### AgentOrchestrator
 
@@ -126,6 +128,7 @@ Features:
 - 30s execute timeout (60s for dangerous actions after approval)
 - Filters requests by `tabId` when provided (multi-tab safe)
 - Backward compatible — requests without `tabId` are processed by all orchestrators
+- Tab-targeted `execute` for an unknown `componentId` returns a `not found` error immediately; broadcast requests (no `tabId`) stay silent so orchestrators in other tabs can answer
 
 ### Tab Scoping
 
@@ -157,6 +160,7 @@ Actions marked with `dangerous: true` require user confirmation before execution
 - **Approve** — the action executes with a 60s timeout (instead of the standard 30s)
 - **Reject** — the agent receives an error response: `"Action rejected by user"`
 - Non-dangerous actions are unaffected — zero overhead, immediate execution
+- The Approve button arms after a short delay (~0.7s) every time the modal content changes, so a rapid follow-up request can't capture a click the user aimed at the previous action
 
 ```javascript
 // Mark an action as dangerous in your component
@@ -185,8 +189,18 @@ get agentActions() {
 
 **Internal (Orchestrator ↔ Widgets):**
 ```javascript
-{ type: 'internal', action: 'ROLL_CALL' | 'REGISTER' | 'EXECUTE' | 'RESULT' | ..., tabId: '<uuid>' }
+{ type: 'internal', action: 'ROLL_CALL' | 'REGISTER' | 'REGISTER_ACK' | 'EXECUTE' | 'RESULT' | ..., tabId: '<uuid>', orchestratorId: '<uuid>' }
 ```
+
+Widgets adopt the orchestrator that acknowledges their registration (`REGISTER_ACK`) or announces itself (`ORCHESTRATOR_READY` / `ROLL_CALL`), and only accept `EXECUTE` messages carrying that `orchestratorId`.
+
+## Security Model
+
+Be clear about what the approval gate is — and what it is not:
+
+- **It is a safety mechanism for cooperative agents.** An agent using the documented API (`ping` / `discover` / `execute`) cannot run a `dangerous: true` action without the user clicking Approve. Widgets reject `EXECUTE` messages that don't come from their registered orchestrator, so the documented path always goes through the gate.
+- **It is not a security boundary against malicious code.** BroadcastChannel is same-origin and public: any script with code execution on the page can sniff internal messages, forge them, or simply manipulate the DOM directly. Nothing built on top of a shared channel can prevent that — if untrusted code runs on your Salesforce origin, you have a bigger problem than the bridge.
+- The bridge grants no new privileges: every action executes with the logged-in user's permissions, enforced server-side by Salesforce as usual.
 
 ## Patterns
 

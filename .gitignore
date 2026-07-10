@@ -64,3 +64,6 @@ target/
 **/tsconfig*.json
 **/*.tsbuildinfo
 .idea/
+
+**/graphql.config.yml
+.chat-inbox.json
