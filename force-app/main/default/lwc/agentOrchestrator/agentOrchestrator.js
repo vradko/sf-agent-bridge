@@ -14,12 +14,15 @@ import {
 export default class AgentOrchestrator extends LightningElement {
     _registry = new Map();
     _pendingRequests = new Map();
+    _pendingChats = new Map();
     _channel = null;
     _orchestratorId = null;
     _tabId = null;
     _duplicateWarning = false;
     _warningDismissed = false;
     @track _approvalState = null;
+    _approvalArmed = false;
+    _armTimerId = null;
 
     get _showWarning() {
         return this._duplicateWarning && !this._warningDismissed;
@@ -45,15 +48,19 @@ export default class AgentOrchestrator extends LightningElement {
         return this._approvalState?.paramSummary || [];
     }
 
+    get _approveDisabled() {
+        return !this._approvalArmed;
+    }
+
     handleDismissWarning() {
         this._warningDismissed = true;
     }
 
     handleApprove() {
-        if (!this._approvalState) return;
+        if (!this._approvalState || !this._approvalArmed) return;
         const { payload, resolve, reject, timeoutId } = this._approvalState;
         clearTimeout(timeoutId);
-        this._approvalState = null;
+        this._clearApprovalUi();
         this._executeImmediate(payload, Timeout.DANGEROUS_EXECUTE)
             .then(resolve)
             .catch(reject);
@@ -63,8 +70,17 @@ export default class AgentOrchestrator extends LightningElement {
         if (!this._approvalState) return;
         const { reject, timeoutId } = this._approvalState;
         clearTimeout(timeoutId);
-        this._approvalState = null;
+        this._clearApprovalUi();
         reject(new Error('Action rejected by user'));
+    }
+
+    _clearApprovalUi() {
+        this._approvalState = null;
+        this._approvalArmed = false;
+        if (this._armTimerId) {
+            clearTimeout(this._armTimerId);
+            this._armTimerId = null;
+        }
     }
 
     // ── Lifecycle ──────────────────────────────────────────────────
@@ -89,7 +105,7 @@ export default class AgentOrchestrator extends LightningElement {
         if (this._approvalState) {
             clearTimeout(this._approvalState.timeoutId);
             this._approvalState.reject(new Error('Orchestrator disconnected'));
-            this._approvalState = null;
+            this._clearApprovalUi();
         }
         if (this._channel) {
             this._channel.close();
@@ -168,6 +184,8 @@ export default class AgentOrchestrator extends LightningElement {
         } else if (data.type === MessageType.REQUEST) {
             if (data.tabId && data.tabId !== this._tabId) return;
             this._handleAgentRequest(data);
+        } else if (data.type === MessageType.RESPONSE) {
+            this._handleChatResponse(data);
         }
     }
 
@@ -177,6 +195,9 @@ export default class AgentOrchestrator extends LightningElement {
                 this._registry.set(data.componentId, {
                     label: data.label,
                     actions: data.actions
+                });
+                this._broadcast(InternalAction.REGISTER_ACK, {
+                    componentId: data.componentId
                 });
                 break;
             case InternalAction.UNREGISTER:
@@ -191,6 +212,9 @@ export default class AgentOrchestrator extends LightningElement {
                     this._duplicateWarning = true;
                     console.warn('AgentOrchestrator: Another orchestrator detected in this tab.');
                 }
+                break;
+            case InternalAction.CHAT_MESSAGE:
+                this._handleChatMessage(data);
                 break;
             default:
                 break;
@@ -223,9 +247,11 @@ export default class AgentOrchestrator extends LightningElement {
                     result = await this._discover();
                     break;
                 case AgentAction.EXECUTE:
-                    result = await this._execute(payload);
+                    result = await this._execute(payload, data.tabId);
                     if (result === null) return;
                     break;
+                case AgentAction.CHAT:
+                    return;
                 default:
                     throw new Error(`Unknown action: ${action}`);
             }
@@ -269,10 +295,17 @@ export default class AgentOrchestrator extends LightningElement {
         });
     }
 
-    _execute(payload) {
+    _execute(payload, requestTabId) {
         const { componentId, actionName } = payload;
 
         if (!this._registry.has(componentId)) {
+            // no tabId → broadcast request: stay silent, another tab's orchestrator may own it
+            if (requestTabId) {
+                throw new Error(
+                    `Component '${componentId}' not found in this tab. ` +
+                    `Run 'discover' to refresh component ids.`
+                );
+            }
             return null;
         }
 
@@ -322,10 +355,18 @@ export default class AgentOrchestrator extends LightningElement {
             this._approvalState.reject(new Error('Superseded by new approval request'));
         }
 
+        // re-arm on every modal content change (see Timeout.APPROVAL_ARM)
+        this._approvalArmed = false;
+        if (this._armTimerId) clearTimeout(this._armTimerId);
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        this._armTimerId = setTimeout(() => {
+            this._approvalArmed = true;
+        }, Timeout.APPROVAL_ARM);
+
         return new Promise((resolve, reject) => {
             // eslint-disable-next-line @lwc/lwc/no-async-operation
             const timeoutId = setTimeout(() => {
-                this._approvalState = null;
+                this._clearApprovalUi();
                 reject(new Error(`Approval timeout for action '${actionDef.name}'`));
             }, Timeout.DANGEROUS_EXECUTE);
 
@@ -345,6 +386,51 @@ export default class AgentOrchestrator extends LightningElement {
         });
     }
 
+    // ── Chat Routing ──────────────────────────────────────────────
+
+    _handleChatMessage(data) {
+        const { chatId, message } = data;
+        const requestId = generateId();
+
+        this._pendingChats.set(requestId, chatId);
+
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        setTimeout(() => {
+            if (this._pendingChats.has(requestId)) {
+                this._pendingChats.delete(requestId);
+                this._broadcast(InternalAction.CHAT_RESPONSE, {
+                    chatId,
+                    error: true,
+                    reply: 'No agent responded within the timeout period.'
+                });
+            }
+        }, Timeout.CHAT);
+
+        if (this._channel) {
+            this._channel.postMessage({
+                type: MessageType.REQUEST,
+                id: requestId,
+                action: AgentAction.CHAT,
+                payload: { message, chatId, tabId: this._tabId },
+                tabId: this._tabId
+            });
+        }
+    }
+
+    _handleChatResponse(data) {
+        const chatId = this._pendingChats.get(data.id);
+        if (!chatId) return;
+        this._pendingChats.delete(data.id);
+
+        this._broadcast(InternalAction.CHAT_RESPONSE, {
+            chatId,
+            error: data.status === ResponseStatus.ERROR,
+            reply: data.status === ResponseStatus.OK
+                ? (data.payload?.reply || data.payload?.message || JSON.stringify(data.payload))
+                : (data.payload?.message || 'Agent returned an error.')
+        });
+    }
+
     // ── Transport ──────────────────────────────────────────────────
 
     _broadcast(action, extra) {
@@ -353,6 +439,7 @@ export default class AgentOrchestrator extends LightningElement {
                 type: MessageType.INTERNAL,
                 action,
                 tabId: this._tabId,
+                orchestratorId: this._orchestratorId,
                 ...extra
             });
         }

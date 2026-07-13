@@ -12,6 +12,7 @@ const AgentBridgeMixin = (Base) =>
         _agentComponentId = null;
         _channel = null;
         _tabId = null;
+        _orchestratorId = null;
 
         // ── Public API (override in consumer) ──────────────────────
 
@@ -26,6 +27,14 @@ const AgentBridgeMixin = (Base) =>
         }
 
         get agentComponentLabel() {
+            // constructor.name gets minified in production; the tag name doesn't
+            const tag = this.template?.host?.tagName;
+            if (tag) {
+                return tag
+                    .toLowerCase()
+                    .replace(/^c-/, '')
+                    .replace(/(?:^|-)([a-z0-9])/g, (_, ch) => ch.toUpperCase());
+            }
             return this.constructor.name;
         }
 
@@ -54,6 +63,7 @@ const AgentBridgeMixin = (Base) =>
                 super.connectedCallback();
             }
             this._agentComponentId = null;
+            this._orchestratorId = null;
             this._tabId = getTabId();
             this._channel = new BroadcastChannel(CHANNEL_NAME);
             this._channel.onmessage = (event) => this._onMessage(event.data);
@@ -80,12 +90,31 @@ const AgentBridgeMixin = (Base) =>
             switch (data.action) {
                 case InternalAction.ROLL_CALL:
                 case InternalAction.ORCHESTRATOR_READY:
+                    if (data.orchestratorId) {
+                        this._orchestratorId = data.orchestratorId;
+                    }
                     this._sendRegister();
                     break;
-                case InternalAction.EXECUTE:
-                    if (data.componentId === this.agentComponentId) {
-                        this._handleExecute(data);
+                case InternalAction.REGISTER_ACK:
+                    if (data.componentId === this.agentComponentId && data.orchestratorId) {
+                        this._orchestratorId = data.orchestratorId;
                     }
+                    break;
+                case InternalAction.ORCHESTRATOR_GONE:
+                    if (data.orchestratorId === this._orchestratorId) {
+                        this._orchestratorId = null;
+                    }
+                    break;
+                case InternalAction.EXECUTE:
+                    if (data.componentId !== this.agentComponentId) break;
+                    // forged EXECUTE bypassing the orchestrator (and its approval gate) is dropped
+                    if (!data.orchestratorId || data.orchestratorId !== this._orchestratorId) {
+                        console.warn(
+                            `AgentBridge: '${this.agentComponentLabel}' ignored EXECUTE from unrecognized orchestrator`
+                        );
+                        break;
+                    }
+                    this._handleExecute(data);
                     break;
                 default:
                     break;

@@ -1,7 +1,7 @@
 // ── Channel & Storage ──────────────────────────────────────────────
 
 export const CHANNEL_NAME = 'sf-agent-bridge';
-export const BRIDGE_VERSION = '1.0.0';
+export const BRIDGE_VERSION = '1.1.0';
 
 const TAB_ID_KEY = '__sfAgentBridgeTabId';
 
@@ -17,12 +17,15 @@ export const MessageType = {
 
 export const InternalAction = {
     REGISTER: 'REGISTER',
+    REGISTER_ACK: 'REGISTER_ACK',
     UNREGISTER: 'UNREGISTER',
     ROLL_CALL: 'ROLL_CALL',
     EXECUTE: 'EXECUTE',
     RESULT: 'RESULT',
     ORCHESTRATOR_READY: 'ORCHESTRATOR_READY',
-    ORCHESTRATOR_GONE: 'ORCHESTRATOR_GONE'
+    ORCHESTRATOR_GONE: 'ORCHESTRATOR_GONE',
+    CHAT_MESSAGE: 'CHAT_MESSAGE',
+    CHAT_RESPONSE: 'CHAT_RESPONSE'
 };
 
 // ── Agent Actions (External → Orchestrator) ────────────────────────
@@ -30,7 +33,8 @@ export const InternalAction = {
 export const AgentAction = {
     PING: 'ping',
     DISCOVER: 'discover',
-    EXECUTE: 'execute'
+    EXECUTE: 'execute',
+    CHAT: 'chat'
 };
 
 // ── Response Status ────────────────────────────────────────────────
@@ -47,7 +51,10 @@ export const Timeout = {
     EXECUTE: 30000,
     DANGEROUS_EXECUTE: 60000,
     ROLL_CALL: 500,
-    DUPLICATE_CHECK: 1000
+    DUPLICATE_CHECK: 1000,
+    CHAT: 120000,
+    // Anti-clickjacking: Approve stays disabled this long after the modal (re)renders
+    APPROVAL_ARM: 700
 };
 
 // ── Param Types for Validation ─────────────────────────────────────
