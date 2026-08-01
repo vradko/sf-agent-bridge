@@ -1,0 +1,57 @@
+<template>
+  <lightning-modal-header label="Edit Candidate"></lightning-modal-header>
+  <lightning-modal-body>
+    <div class="slds-p-around_medium">
+      <lightning-input
+        label="First Name"
+        value={_firstName}
+        data-field="firstName"
+        onchange={handleFieldChange}
+        required
+        class="slds-m-bottom_small"
+      ></lightning-input>
+      <lightning-input
+        label="Last Name"
+        value={_lastName}
+        data-field="lastName"
+        onchange={handleFieldChange}
+        required
+        class="slds-m-bottom_small"
+      ></lightning-input>
+      <lightning-input
+        label="Email"
+        type="email"
+        value={_email}
+        data-field="email"
+        onchange={handleFieldChange}
+        class="slds-m-bottom_small"
+      ></lightning-input>
+      <lightning-input
+        label="Phone"
+        type="tel"
+        value={_phone}
+        data-field="phone"
+        onchange={handleFieldChange}
+        class="slds-m-bottom_small"
+      ></lightning-input>
+      <lightning-combobox
+        label="Stage"
+        value={_stage}
+        options={stageOptions}
+        data-field="stage"
+        onchange={handleFieldChange}
+        class="slds-m-bottom_small"
+      ></lightning-combobox>
+      <lightning-textarea
+        label="Notes"
+        value={_notes}
+        data-field="notes"
+        onchange={handleFieldChange}
+      ></lightning-textarea>
+    </div>
+  </lightning-modal-body>
+  <lightning-modal-footer>
+    <lightning-button label="Cancel" onclick={handleCancel}></lightning-button>
+    <lightning-button label="Save" variant="brand" onclick={handleSave}></lightning-button>
+  </lightning-modal-footer>
+</template>

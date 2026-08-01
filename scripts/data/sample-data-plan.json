@@ -1,0 +1,14 @@
+{
+  "records": [
+    {
+      "attributes": { "type": "Account", "referenceId": "AcctAcmeRef" },
+      "Name": "Acme Corporation",
+      "Industry": "Technology"
+    },
+    {
+      "attributes": { "type": "Account", "referenceId": "AcctGlobalRef" },
+      "Name": "Global Tech Industries",
+      "Industry": "Manufacturing"
+    }
+  ]
+}

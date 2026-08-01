@@ -1,0 +1,93 @@
+<template>
+  <lightning-card title="Candidates" icon-name="standard:people">
+    <div class="slds-p-around_medium">
+      <!-- Filter Bar -->
+      <div class="slds-grid slds-gutters slds-m-bottom_small">
+        <div class="slds-col slds-size_1-of-3">
+          <lightning-combobox
+            label="Stage"
+            value={_activeStageFilter}
+            options={stageOptions}
+            onchange={handleStageFilterChange}
+            variant="label-hidden"
+            placeholder="Filter by stage..."
+          ></lightning-combobox>
+        </div>
+        <div class="slds-col slds-size_1-of-3">
+          <lightning-input
+            type="search"
+            label="Search"
+            value={_activeSearchTerm}
+            onchange={handleSearchChange}
+            onkeyup={handleSearchKeyUp}
+            variant="label-hidden"
+            placeholder="Search by name..."
+          ></lightning-input>
+        </div>
+        <div class="slds-col slds-size_1-of-3">
+          <template if:true={hasActiveFilter}>
+            <lightning-button
+              label="Clear Filters"
+              variant="neutral"
+              onclick={handleClearFilters}
+              class="slds-m-top_xx-small"
+            ></lightning-button>
+          </template>
+        </div>
+      </div>
+
+      <template if:true={hasActiveFilter}>
+        <p class="slds-text-body_small slds-m-bottom_small slds-text-color_weak">Filtered: {filterSummary}</p>
+      </template>
+
+      <!-- Loading -->
+      <template if:true={_loading}>
+        <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+      </template>
+
+      <!-- Error -->
+      <template if:true={hasError}>
+        <div class="slds-text-color_error slds-m-bottom_small">{_error}</div>
+      </template>
+
+      <!-- Table with child row components -->
+      <template if:false={_loading}>
+        <template if:true={hasCandidates}>
+          <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_striped">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Country</th>
+                <th scope="col">Stage</th>
+                <th scope="col">Interview</th>
+                <th scope="col">Exp</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <template for:each={_candidates} for:item="candidate">
+                <c-candidate-row
+                  key={candidate.Id}
+                  candidate={candidate}
+                  onviewrecord={handleViewRecord}
+                  onstagechanged={handleStageChanged}
+                ></c-candidate-row>
+              </template>
+            </tbody>
+          </table>
+        </template>
+
+        <template if:false={hasCandidates}>
+          <p class="slds-text-body_regular slds-text-color_weak slds-p-around_medium slds-align_absolute-center">
+            No candidates found.
+          </p>
+        </template>
+      </template>
+
+      <p class="slds-text-body_small slds-text-color_weak slds-m-top_small">
+        Agent Bridge Component ID: {agentComponentId}
+      </p>
+    </div>
+  </lightning-card>
+</template>

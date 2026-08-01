@@ -67,3 +67,4 @@ target/
 
 **/graphql.config.yml
 .chat-inbox.json
+.chat-outbox.json
