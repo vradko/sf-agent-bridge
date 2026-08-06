@@ -344,6 +344,41 @@ describe('c-agent-orchestrator', () => {
       expect(channel._messages.find((message) => message.id === 'idem-1').status).toBe(ResponseStatus.OK);
       expect(channel._messages.find((message) => message.id === 'idem-2').status).toBe(ResponseStatus.OK);
     });
+
+    it('releases the idempotency key when the user rejects the approval', async () => {
+      channel._receive({
+        type: MessageType.INTERNAL,
+        action: InternalAction.REGISTER,
+        componentId: 'c2',
+        label: 'W2',
+        actions: [{ name: 'destroy', description: 'd', dangerous: true, params: [], returns: { type: 'object' } }]
+      });
+      const payload = { componentId: 'c2', actionName: 'destroy', params: {}, idempotencyKey: 'retry-after-reject' };
+      channel._receive({
+        type: MessageType.REQUEST,
+        id: 'rj-1',
+        action: AgentAction.EXECUTE,
+        tabId: currentTabId(),
+        payload
+      });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      element.shadowRoot.querySelector('[data-action="reject"]').click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(channel._messages.find((message) => message.id === 'rj-1').status).toBe(ResponseStatus.ERROR);
+
+      // same key again: must show a fresh approval prompt, not replay the rejection
+      channel._receive({
+        type: MessageType.REQUEST,
+        id: 'rj-2',
+        action: AgentAction.EXECUTE,
+        tabId: currentTabId(),
+        payload
+      });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(element.shadowRoot.querySelector('[data-approval-dialog]')).toBeTruthy();
+      expect(channel._messages.find((message) => message.id === 'rj-2')).toBeFalsy();
+    });
   });
 
   describe('Duplicate detection', () => {

@@ -1,5 +1,5 @@
 import { LightningElement, track } from 'lwc';
-import { CHANNEL_NAME, MessageType, InternalAction, generateId, getTabId } from 'c/agentBridgeUtils';
+import { CHANNEL_NAME, MessageType, InternalAction, Timeout, generateId, getTabId } from 'c/agentBridgeUtils';
 
 export default class AgentChat extends LightningElement {
   @track _messages = [];
@@ -9,6 +9,7 @@ export default class AgentChat extends LightningElement {
   _tabId = null;
   _chatInstanceId = null;
   _pendingChatIds = new Set();
+  _chatWatchdogs = new Map();
 
   get _hasMessages() {
     return this._messages.length > 0;
@@ -32,6 +33,10 @@ export default class AgentChat extends LightningElement {
       this._channel.close();
       this._channel = null;
     }
+    for (const [, timerId] of this._chatWatchdogs) {
+      clearTimeout(timerId);
+    }
+    this._chatWatchdogs.clear();
     this._pendingChatIds.clear();
     this._isWaiting = false;
   }
@@ -52,6 +57,11 @@ export default class AgentChat extends LightningElement {
   _handleChatResponse(data) {
     if (!this._pendingChatIds.has(data.chatId)) return;
     this._pendingChatIds.delete(data.chatId);
+    const watchdogId = this._chatWatchdogs.get(data.chatId);
+    if (watchdogId) {
+      clearTimeout(watchdogId);
+      this._chatWatchdogs.delete(data.chatId);
+    }
 
     const pendingIdx = this._messages.findIndex((m) => m.chatId === data.chatId && m.role === 'pending');
 
@@ -127,6 +137,18 @@ export default class AgentChat extends LightningElement {
         message
       });
     }
+
+    // With no orchestrator on the page nothing will ever answer; fire just
+    // after the orchestrator's own CHAT timeout would have responded.
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    const watchdogId = setTimeout(() => {
+      this._handleChatResponse({
+        chatId,
+        error: true,
+        reply: 'No orchestrator responded. Check that an Agent Bridge orchestrator is on this page.'
+      });
+    }, Timeout.CHAT + 5000);
+    this._chatWatchdogs.set(chatId, watchdogId);
 
     this._scrollToBottom();
   }

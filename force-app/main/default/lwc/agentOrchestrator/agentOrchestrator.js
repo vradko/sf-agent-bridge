@@ -35,6 +35,14 @@ function executionFingerprint(payload) {
   }
 }
 
+// Failures where EXECUTE was never dispatched — no side effects are possible,
+// so the idempotency key can be released and a retry re-prompts the user.
+function preDispatchError(message) {
+  const error = new Error(message);
+  error.executionNotStarted = true;
+  return error;
+}
+
 export default class AgentOrchestrator extends LightningElement {
   _registry = new Map();
   _pendingRequests = new Map();
@@ -99,7 +107,7 @@ export default class AgentOrchestrator extends LightningElement {
     const { reject, timeoutId } = this._approvalState;
     clearTimeout(timeoutId);
     this._clearApprovalUi();
-    reject(new Error('Action rejected by user'));
+    reject(preDispatchError('Action rejected by user'));
   }
 
   handleApprovalKeyDown(event) {
@@ -421,6 +429,14 @@ export default class AgentOrchestrator extends LightningElement {
         this._idempotencyCache.delete(idempotencyKey);
       }, Timeout.IDEMPOTENCY_TTL);
       this._idempotencyCache.set(idempotencyKey, { fingerprint, promise, timeoutId });
+      promise.catch((error) => {
+        if (!error?.executionNotStarted) return;
+        const entry = this._idempotencyCache.get(idempotencyKey);
+        if (entry?.promise === promise) {
+          clearTimeout(entry.timeoutId);
+          this._idempotencyCache.delete(idempotencyKey);
+        }
+      });
       return promise;
     }
 
@@ -495,7 +511,11 @@ export default class AgentOrchestrator extends LightningElement {
     const request = this._approvalQueue.shift();
     const { componentData, actionDef, payload, resolve, reject } = request;
     const approvalId = generateId();
-    this._previousFocus = document.activeElement;
+    // capture only for the first modal of a burst — later queue entries would
+    // capture the previous modal's (soon-detached) button and lose user focus
+    if (!this._previousFocus) {
+      this._previousFocus = document.activeElement;
+    }
 
     // re-arm on every modal content change (see Timeout.APPROVAL_ARM)
     this._approvalArmed = false;
@@ -509,7 +529,7 @@ export default class AgentOrchestrator extends LightningElement {
     const timeoutId = setTimeout(() => {
       if (this._approvalState?.approvalId !== approvalId) return;
       this._clearApprovalUi();
-      reject(new Error(`Approval timeout for action '${actionDef.name}'`));
+      reject(preDispatchError(`Approval timeout for action '${actionDef.name}'`));
     }, Timeout.APPROVAL);
 
     const params = payload.params || {};

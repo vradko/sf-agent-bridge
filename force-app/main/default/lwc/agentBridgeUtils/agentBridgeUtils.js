@@ -199,3 +199,8 @@ function describeType(value) {
 export function isSameTab(messageTabId, localTabId) {
   return !messageTabId || !localTabId || messageTabId === localTabId;
 }
+
+// Single source of the deterministic component id format (see agentStableKey)
+export function stableComponentId(label, key) {
+  return `stable:${label}:${key}`;
+}

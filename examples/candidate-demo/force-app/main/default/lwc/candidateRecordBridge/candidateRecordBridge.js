@@ -30,7 +30,7 @@ export default class CandidateRecordBridge extends NavigationMixin(AgentBridgeMi
             type: 'string',
             required: true,
             description: 'API name of the field',
-            enum: ['First_Name__c', 'Last_Name__c', 'Email__c', 'Phone__c', 'Stage__c', 'Notes__c']
+            enum: ['First_Name__c', 'Last_Name__c', 'Email__c', 'Phone__c', 'Stage__c', 'Notes__c', 'Country__c']
           },
           { name: 'value', type: 'string', required: true, description: 'New field value' }
         ],

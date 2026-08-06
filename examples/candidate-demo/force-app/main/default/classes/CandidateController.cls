@@ -121,7 +121,7 @@ public with sharing class CandidateController {
     if (!VALID_STAGES.contains(stage)) {
       throw new AuraHandledException('Invalid stage: ' + stage);
     }
-    Candidate__c candidate = [SELECT Id FROM Candidate__c WHERE Id = :candidateId WITH USER_MODE];
+    Candidate__c candidate = fetchForUpdate(candidateId);
     candidate.Stage__c = stage;
     update as user candidate;
     return [
@@ -152,12 +152,17 @@ public with sharing class CandidateController {
     String stage,
     String notes
   ) {
-    Candidate__c candidate = [
+    List<Candidate__c> rows = [
       SELECT Id, First_Name__c, Last_Name__c, Email__c, Phone__c, Stage__c, Notes__c
       FROM Candidate__c
       WHERE Id = :candidateId
       WITH USER_MODE
+      LIMIT 1
     ];
+    if (rows.isEmpty()) {
+      throw new AuraHandledException('Candidate not found or not accessible: ' + candidateId);
+    }
+    Candidate__c candidate = rows[0];
     if (firstName != null)
       candidate.First_Name__c = firstName;
     if (lastName != null)
@@ -196,7 +201,7 @@ public with sharing class CandidateController {
 
   @AuraEnabled
   public static Candidate__c getCandidate(Id candidateId) {
-    return [
+    List<Candidate__c> rows = [
       SELECT
         Id,
         Name,
@@ -213,7 +218,12 @@ public with sharing class CandidateController {
       FROM Candidate__c
       WHERE Id = :candidateId
       WITH USER_MODE
+      LIMIT 1
     ];
+    if (rows.isEmpty()) {
+      throw new AuraHandledException('Candidate not found or not accessible: ' + candidateId);
+    }
+    return rows[0];
   }
 
   @AuraEnabled
@@ -233,7 +243,7 @@ public with sharing class CandidateController {
     if (fieldName == 'Stage__c' && !VALID_STAGES.contains(fieldValue)) {
       throw new AuraHandledException('Invalid stage: ' + fieldValue);
     }
-    Candidate__c candidate = [SELECT Id FROM Candidate__c WHERE Id = :candidateId WITH USER_MODE];
+    Candidate__c candidate = fetchForUpdate(candidateId);
     candidate.put(fieldName, fieldValue);
     update as user candidate;
     return [
@@ -258,7 +268,17 @@ public with sharing class CandidateController {
 
   @AuraEnabled
   public static void deleteCandidate(Id candidateId) {
-    Candidate__c candidate = [SELECT Id FROM Candidate__c WHERE Id = :candidateId WITH USER_MODE];
+    Candidate__c candidate = fetchForUpdate(candidateId);
     delete as user candidate;
+  }
+
+  // Single-row lookups throw a raw QueryException on zero rows; surface a clear
+  // error instead so agents can react to a stale or foreign record id.
+  private static Candidate__c fetchForUpdate(Id candidateId) {
+    List<Candidate__c> rows = [SELECT Id FROM Candidate__c WHERE Id = :candidateId WITH USER_MODE LIMIT 1];
+    if (rows.isEmpty()) {
+      throw new AuraHandledException('Candidate not found or not accessible: ' + candidateId);
+    }
+    return rows[0];
   }
 }

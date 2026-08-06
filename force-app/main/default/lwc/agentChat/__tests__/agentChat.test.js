@@ -121,4 +121,16 @@ describe('c-agent-chat', () => {
     document.body.removeChild(element);
     expect(channel.closed).toBe(true);
   });
+
+  it('fails fast when no orchestrator ever responds', async () => {
+    jest.useFakeTimers();
+    try {
+      sendMessage('Anyone there?');
+      jest.advanceTimersByTime(246000);
+      await Promise.resolve();
+      expect(element.shadowRoot.textContent).toContain('No orchestrator responded');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

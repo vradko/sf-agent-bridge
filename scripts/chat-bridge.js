@@ -18,6 +18,7 @@
 
 const WebSocket = require('ws');
 const http = require('http');
+const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 const path = require('path');
 
@@ -174,6 +175,9 @@ function callClaude(prompt, sessionId, timeoutMs) {
 async function runAgentTurn(ws, tabId, userMessage, sessionId) {
   const deadline = Date.now() + AGENT_TURN_TIMEOUT;
   const remainingTime = () => deadline - Date.now();
+  // per-turn nonce keeps idempotency keys unique across turns even if the CLI
+  // ever returns a stable session id; params hash guards against step-index reuse
+  const turnNonce = crypto.randomBytes(4).toString('hex');
 
   // fresh discover every turn — the page may have changed
   let components = [];
@@ -214,6 +218,11 @@ async function runAgentTurn(ws, tabId, userMessage, sessionId) {
       try {
         const toolTimeout = Math.min(130000, remainingTime() - 2000);
         if (toolTimeout < 5000) throw new Error('Agent turn deadline reached');
+        const paramsHash = crypto
+          .createHash('sha1')
+          .update(JSON.stringify(params || {}))
+          .digest('hex')
+          .slice(0, 8);
         const r = await bridgeCall(
           ws,
           tabId,
@@ -222,7 +231,7 @@ async function runAgentTurn(ws, tabId, userMessage, sessionId) {
             componentId,
             actionName,
             params: params || {},
-            idempotencyKey: `chat:${sessionId || 'new'}:${step}:${componentId}:${actionName}`
+            idempotencyKey: `chat:${turnNonce}:${step}:${componentId}:${actionName}:${paramsHash}`
           },
           toolTimeout
         );

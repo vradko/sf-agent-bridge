@@ -27,7 +27,7 @@ Every step has a **fallback** — if the agentic path fails on stage, paste the 
 
 ```bash
 # 1. Re-auth DevHub if needed
-sf org login web --alias MyPersonal --instance-url https://vradko-personal-dev-ed.my.salesforce.com --set-default-dev-hub
+sf org login web --alias MyPersonal --instance-url https://<your-devhub>.my.salesforce.com --set-default-dev-hub
 
 # 2. Create + deploy + data (one shot, ~5 min)
 ./scripts/setup-demo-org.sh sf-bridge-demo MyPersonal 30

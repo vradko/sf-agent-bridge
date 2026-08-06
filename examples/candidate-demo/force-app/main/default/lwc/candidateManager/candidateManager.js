@@ -1,6 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 import AgentBridgeMixin from 'c/agentBridgeMixin';
+import { stableComponentId } from 'c/agentBridgeUtils';
 import CandidateEditModal from 'c/candidateEditModal';
 import getCandidatesByAccount from '@salesforce/apex/CandidateController.getCandidatesByAccount';
 import filterCandidates from '@salesforce/apex/CandidateController.filterCandidates';
@@ -411,7 +412,7 @@ export default class CandidateManager extends NavigationMixin(AgentBridgeMixin(L
   _getRowComponents() {
     const mapping = {};
     for (const c of this._candidates) {
-      mapping[c.Id] = `stable:CandidateRow:${c.Id}`;
+      mapping[c.Id] = stableComponentId('CandidateRow', c.Id);
     }
     return mapping;
   }

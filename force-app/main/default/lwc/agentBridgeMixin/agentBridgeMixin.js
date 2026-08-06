@@ -1,4 +1,12 @@
-import { CHANNEL_NAME, MessageType, InternalAction, generateId, getTabId, validateParams } from 'c/agentBridgeUtils';
+import {
+  CHANNEL_NAME,
+  MessageType,
+  InternalAction,
+  generateId,
+  getTabId,
+  validateParams,
+  stableComponentId
+} from 'c/agentBridgeUtils';
 
 const AgentBridgeMixin = (Base) =>
   class extends Base {
@@ -12,7 +20,7 @@ const AgentBridgeMixin = (Base) =>
     get agentComponentId() {
       if (!this._agentComponentId) {
         const stableKey = this.agentStableKey;
-        this._agentComponentId = stableKey ? `stable:${this.agentComponentLabel}:${stableKey}` : generateId();
+        this._agentComponentId = stableKey ? stableComponentId(this.agentComponentLabel, stableKey) : generateId();
       }
       return this._agentComponentId;
     }
