@@ -14,6 +14,20 @@ SF Agent Bridge takes a different approach: instead of replacing the UI with API
 
 **This is not a replacement for APIs.** It's a bridge that lets AI agents drive the current application through prompts — while the user sees every change happen in real time on their screen. The value scales with the complexity of the UI: the more clicks and configuration a task normally requires, the more time the bridge saves.
 
+## What an Agent Can Do
+
+Once the orchestrator is on a page, any agent that can evaluate JavaScript in the tab (Chrome DevTools MCP, CDP, a browser extension) can:
+
+- **Discover the page** — get every bridge-enabled component with a typed, LLM-ready schema of its actions (names, descriptions, param types, enums)
+- **Operate live UI** — filter and sort tables, fill and submit forms, update records; the user watches it happen on screen
+- **Target individual rows** in lists through stable component ids that survive re-renders (`stable:CandidateRow:<recordId>`)
+- **Navigate** between record pages and continue working after re-discovery
+- **Run destructive actions only through a human** — anything flagged `dangerous` pauses for an on-screen approval with an anti-clickjacking arming delay
+- **Retry safely** — idempotency keys make mutation retries side-effect-free for five minutes
+- **Chat with the user** through an on-page chat widget wired to a local agent process (`scripts/chat-bridge.js` connects it to Claude)
+
+Everything runs with the logged-in user's permissions — the bridge grants no new privileges.
+
 ## How It Works
 
 ```
@@ -44,12 +58,7 @@ Bridge traffic uses a single `BroadcastChannel('sf-agent-bridge')` scoped by `ta
 
 ## Installation
 
-For local validation and development:
-
-```bash
-npm ci
-npm run check
-```
+> Contributing or running the test suite? The repo root intentionally ships no npm manifests — see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the one-command bootstrap.
 
 ### 1. Deploy to your org
 
@@ -166,12 +175,21 @@ Include `tabId` in every execute request. Unscoped `ping` and `discover` remain 
 
 This approach works within Salesforce Lightning Web Security, which blocks direct `window` property assignment but allows `CustomEvent` on `document`.
 
+### AI Skills
+
+The `skills/` directory teaches an AI both sides of the bridge:
+
+- [`skills/agent-bridge-protocol`](skills/agent-bridge-protocol/SKILL.md) — how an agent drives a page: handshake, discover, execute, approval and retry semantics, error taxonomy
+- [`skills/agent-bridge-widgets`](skills/agent-bridge-widgets/SKILL.md) — how to author bridge-enabled LWC widgets: schemas, stable keys, lifecycle pitfalls
+
+With Claude Code, copy them into your project (`cp -r skills/* .claude/skills/`) and they load on demand; for any other agent, paste the relevant `SKILL.md` into its system prompt. `scripts/agent/SYSTEM_PROMPT.md` is a verbose standalone variant used by the bundled chat bridge.
+
 ### Approval Gate for Dangerous Actions
 
 Actions marked with `dangerous: true` require user confirmation before execution. When the agent calls a dangerous action, the orchestrator shows an inline confirmation modal displaying the action name, component label, and parameters. The agent's request is held until the user clicks **Approve** or **Reject**.
 
 - **Approve** — the action executes with a 60s timeout (instead of the standard 30s); approval itself has a separate 60s timeout
-- **Reject** — the agent receives an error response: `"Action rejected by user"`
+- **Reject** — the agent receives an error response: `"Action rejected by user"`. A rejection (or approval timeout) also releases the request's idempotency key, so a later retry with the same key shows a fresh approval prompt instead of replaying the rejection
 - Non-dangerous actions are unaffected — zero overhead, immediate execution
 - The Approve button arms after a short delay (~0.7s) every time the modal content changes, so a rapid follow-up request can't capture a click the user aimed at the previous action
 - Concurrent dangerous requests are queued and shown one at a time
@@ -227,6 +245,7 @@ Be clear about what the approval gate is — and what it is not:
 - A transport timeout does not cancel JavaScript or Apex work that has already started. Treat a timeout as an unknown outcome.
 - For any non-idempotent mutation, provide an `idempotencyKey` and reuse the same key if the request must be retried. The orchestrator deduplicates matching requests for five minutes.
 - Reusing an idempotency key with different component, action, or parameters is rejected.
+- Failures where execution never started (user rejected the approval, or the approval timed out) release the key immediately — retrying with the same key prompts the user again.
 - Run `discover` after navigation. Discovery rebuilds the registry from a fresh roll call and drops stale widget registrations.
 
 ## Patterns
@@ -273,6 +292,8 @@ force-app/main/default/lwc/
 
 examples/candidate-demo/  # Deployable Apex + LWC browser demo
 scripts/                  # Browser/CDP helpers and optional local chat agents
+skills/                   # AI skills: driving the protocol & authoring widgets
+docs/                     # Development bootstrap, demo runbook
 ```
 
 ## License
