@@ -15,9 +15,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
-      - run: npm ci
+      # The repo root ships no npm manifests (see docs/DEVELOPMENT.md);
+      # the pinned dev stack lives in docs/dev/package.json.
+      - name: Bootstrap dev tooling
+        run: cp docs/dev/package.json package.json && npm install
 
       - name: Lint
         run: npm run lint
