@@ -1,114 +1,121 @@
 .chat-container {
-    display: flex;
-    flex-direction: column;
-    height: 400px;
+  display: flex;
+  flex-direction: column;
+  height: 400px;
 }
 
 .chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .user,
 .agent,
 .pending {
-    max-width: 80%;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.75rem;
-    word-wrap: break-word;
+  max-width: 80%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  word-wrap: break-word;
 }
 
 .user {
-    align-self: flex-end;
-    background: #0176d3;
-    color: white;
-    border-bottom-right-radius: 0.25rem;
+  align-self: flex-end;
+  background: #0176d3;
+  color: white;
+  border-bottom-right-radius: 0.25rem;
 }
 
 .agent {
-    align-self: flex-start;
-    background: #f3f3f3;
-    color: #181818;
-    border-bottom-left-radius: 0.25rem;
+  align-self: flex-start;
+  background: #f3f3f3;
+  color: #181818;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.agent.error {
+  background: #fef1ee;
+  color: #ba0517;
 }
 
 .pending {
-    align-self: flex-start;
-    background: #f3f3f3;
-    padding: 0.75rem 1rem;
+  align-self: flex-start;
+  background: #f3f3f3;
+  padding: 0.75rem 1rem;
 }
 
 .chat-text {
-    display: block;
-    font-size: 0.875rem;
-    line-height: 1.4;
-    white-space: pre-wrap;
+  display: block;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
 }
 
 .chat-time {
-    display: block;
-    font-size: 0.7rem;
-    opacity: 0.7;
-    margin-top: 0.25rem;
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.7;
+  margin-top: 0.25rem;
 }
 
 .user .chat-time {
-    text-align: right;
+  text-align: right;
 }
 
 .chat-input {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    border-top: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid #e5e5e5;
 }
 
 .chat-input lightning-input {
-    flex: 1;
+  flex: 1;
 }
 
 .empty-state {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: #706e6b;
-    font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #706e6b;
+  font-size: 0.875rem;
 }
 
 .typing-indicator {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-    height: 1rem;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  height: 1rem;
 }
 
 .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #969492;
-    animation: bounce 1.4s ease-in-out infinite;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #969492;
+  animation: bounce 1.4s ease-in-out infinite;
 }
 
 .dot:nth-child(2) {
-    animation-delay: 0.2s;
+  animation-delay: 0.2s;
 }
 
 .dot:nth-child(3) {
-    animation-delay: 0.4s;
+  animation-delay: 0.4s;
 }
 
 @keyframes bounce {
-    0%, 60%, 100% {
-        transform: translateY(0);
-    }
-    30% {
-        transform: translateY(-4px);
-    }
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
 }

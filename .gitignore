@@ -67,3 +67,9 @@ target/
 
 **/graphql.config.yml
 .chat-inbox.json
+.chat-outbox.json
+
+# npm manifests stay local: the public repo ships no Node dependency stack.
+# Canonical pinned copy lives in docs/dev/package.json (see docs/DEVELOPMENT.md).
+/package.json
+/package-lock.json

@@ -1,0 +1,8 @@
+node_modules/
+coverage/
+.sf/
+.sfdx/
+.localdevserver/
+docs/*.pptx
+/package.json
+/package-lock.json

@@ -1,67 +1,71 @@
 <template>
-    <template lwc:if={_showWarning}>
-        <div class="warning-banner slds-notify slds-notify_alert slds-alert_warning" role="alert">
-            <lightning-icon icon-name="utility:warning" alternative-text="Warning" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-            <span>Agent Bridge: Multiple orchestrators detected on this page. Only one orchestrator should be active. Remove duplicates from Lightning Pages or Utility Bar to avoid unstable behavior.</span>
-            <lightning-button-icon
-                icon-name="utility:close"
-                alternative-text="Close"
-                variant="bare-inverse"
-                onclick={handleDismissWarning}
-                class="slds-m-left_small"
-            ></lightning-button-icon>
-        </div>
-    </template>
+  <template lwc:if={_showWarning}>
+    <div class="warning-banner slds-notify slds-notify_alert slds-alert_warning" role="alert">
+      <lightning-icon
+        icon-name="utility:warning"
+        alternative-text="Warning"
+        size="x-small"
+        class="slds-m-right_x-small"
+      ></lightning-icon>
+      <span
+        >Agent Bridge: Multiple orchestrators detected on this page. Only one orchestrator should be active. Remove
+        duplicates from Lightning Pages or Utility Bar to avoid unstable behavior.</span
+      >
+      <lightning-button-icon
+        icon-name="utility:close"
+        alternative-text="Close"
+        variant="bare-inverse"
+        onclick={handleDismissWarning}
+        class="slds-m-left_small"
+      ></lightning-button-icon>
+    </div>
+  </template>
 
-    <template lwc:if={_showApproval}>
-        <section role="dialog" tabindex="-1" aria-modal="true"
-                 aria-label="Confirm dangerous action"
-                 class="approval-modal slds-modal slds-fade-in-open">
-            <div class="slds-modal__container">
-                <header class="slds-modal__header slds-theme_warning">
-                    <h2 class="slds-text-heading_medium">
-                        Confirm Action: {_approvalActionName}
-                    </h2>
-                </header>
-                <div class="slds-modal__content slds-p-around_medium">
-                    <p class="slds-m-bottom_small">
-                        <strong>Component:</strong> {_approvalComponentLabel}
-                    </p>
-                    <p class="slds-m-bottom_small">
-                        <strong>Action:</strong> {_approvalActionName}
-                    </p>
-                    <template lwc:if={_approvalDescription}>
-                        <p class="slds-m-bottom_small slds-text-color_weak">
-                            {_approvalDescription}
-                        </p>
-                    </template>
-                    <template lwc:if={_approvalParamSummary.length}>
-                        <p class="slds-m-bottom_x-small"><strong>Parameters:</strong></p>
-                        <ul class="slds-list_dotted">
-                            <template for:each={_approvalParamSummary} for:item="param">
-                                <li key={param.key}>
-                                    {param.key}: {param.value}
-                                </li>
-                            </template>
-                        </ul>
-                    </template>
-                </div>
-                <footer class="slds-modal__footer">
-                    <lightning-button
-                        label="Reject"
-                        variant="neutral"
-                        onclick={handleReject}
-                        class="slds-m-right_x-small">
-                    </lightning-button>
-                    <lightning-button
-                        label="Approve"
-                        variant="destructive"
-                        disabled={_approveDisabled}
-                        onclick={handleApprove}>
-                    </lightning-button>
-                </footer>
-            </div>
-        </section>
-        <div class="approval-backdrop slds-backdrop slds-backdrop_open"></div>
-    </template>
+  <template lwc:if={_showApproval}>
+    <section
+      role="alertdialog"
+      tabindex="-1"
+      aria-modal="true"
+      aria-labelledby="approval-title"
+      data-approval-dialog
+      onkeydown={handleApprovalKeyDown}
+      class="approval-modal slds-modal slds-fade-in-open"
+    >
+      <div class="slds-modal__container">
+        <header class="slds-modal__header slds-theme_warning">
+          <h2 id="approval-title" class="slds-text-heading_medium">Confirm Action: {_approvalActionName}</h2>
+        </header>
+        <div class="slds-modal__content slds-p-around_medium">
+          <p class="slds-m-bottom_small"><strong>Component:</strong> {_approvalComponentLabel}</p>
+          <p class="slds-m-bottom_small"><strong>Action:</strong> {_approvalActionName}</p>
+          <template lwc:if={_approvalDescription}>
+            <p class="slds-m-bottom_small slds-text-color_weak">{_approvalDescription}</p>
+          </template>
+          <template lwc:if={_approvalParamSummary.length}>
+            <p class="slds-m-bottom_x-small"><strong>Parameters:</strong></p>
+            <ul class="slds-list_dotted">
+              <template for:each={_approvalParamSummary} for:item="param">
+                <li key={param.key}>{param.key}: {param.value}</li>
+              </template>
+            </ul>
+          </template>
+        </div>
+        <footer class="slds-modal__footer">
+          <button type="button" class="slds-button slds-button_neutral" data-action="reject" onclick={handleReject}>
+            Reject
+          </button>
+          <button
+            type="button"
+            class="slds-button slds-button_destructive"
+            data-action="approve"
+            disabled={_approveDisabled}
+            onclick={handleApprove}
+          >
+            Approve
+          </button>
+        </footer>
+      </div>
+    </section>
+    <div class="approval-backdrop slds-backdrop slds-backdrop_open"></div>
+  </template>
 </template>

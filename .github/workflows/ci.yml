@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The repo root ships no npm manifests (see docs/DEVELOPMENT.md);
+      # the pinned dev stack lives in docs/dev/package.json.
+      - name: Bootstrap dev tooling
+        run: cp docs/dev/package.json package.json && npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit Tests
+        run: npm test
+
+      - name: Formatting
+        run: npm run prettier:verify
+
+      - name: Runtime dependency audit
+        run: npm run audit:runtime

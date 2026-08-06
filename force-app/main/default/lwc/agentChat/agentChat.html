@@ -1,50 +1,50 @@
 <template>
-    <lightning-card title="Agent Chat" icon-name="standard:live_chat">
-        <div class="chat-container">
-            <div class="chat-messages">
-                <template lwc:if={_hasMessages}>
-                    <template for:each={_messages} for:item="msg">
-                        <div class={msg.role} key={msg.id}>
-                            <template lwc:if={msg.isPending}>
-                                <span class="typing-indicator">
-                                    <span class="dot"></span>
-                                    <span class="dot"></span>
-                                    <span class="dot"></span>
-                                </span>
-                            </template>
-                            <template lwc:else>
-                                <span class="chat-text">{msg.content}</span>
-                                <span class="chat-time">{msg.timestamp}</span>
-                            </template>
-                        </div>
-                    </template>
-                </template>
-                <template lwc:else>
-                    <div class="empty-state">
-                        <p>Send a message to the connected agent.</p>
-                    </div>
-                </template>
+  <lightning-card title="Agent Chat" icon-name="standard:live_chat">
+    <div class="chat-container">
+      <div class="chat-messages" role="log" aria-live="polite" aria-relevant="additions">
+        <template lwc:if={_hasMessages}>
+          <template for:each={_messages} for:item="msg">
+            <div class={msg.cssClass} key={msg.id}>
+              <template lwc:if={msg.isPending}>
+                <span class="typing-indicator">
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                </span>
+              </template>
+              <template lwc:else>
+                <span class="chat-text">{msg.content}</span>
+                <span class="chat-time">{msg.timestamp}</span>
+              </template>
             </div>
-            <div class="chat-input">
-                <lightning-input
-                    type="text"
-                    placeholder="Ask the agent..."
-                    value={_inputValue}
-                    onchange={handleInputChange}
-                    onkeyup={handleKeyUp}
-                    disabled={_isDisabled}
-                    variant="label-hidden"
-                    label="Message"
-                ></lightning-input>
-                <lightning-button-icon
-                    icon-name="utility:send"
-                    alternative-text="Send"
-                    variant="brand"
-                    onclick={handleSend}
-                    disabled={_isDisabled}
-                    class="send-button"
-                ></lightning-button-icon>
-            </div>
-        </div>
-    </lightning-card>
+          </template>
+        </template>
+        <template lwc:else>
+          <div class="empty-state">
+            <p>Send a message to the connected agent.</p>
+          </div>
+        </template>
+      </div>
+      <div class="chat-input">
+        <lightning-input
+          type="text"
+          placeholder="Ask the agent..."
+          value={_inputValue}
+          onchange={handleInputChange}
+          onkeyup={handleKeyUp}
+          disabled={_isDisabled}
+          variant="label-hidden"
+          label="Message"
+        ></lightning-input>
+        <lightning-button-icon
+          icon-name="utility:send"
+          alternative-text="Send"
+          variant="brand"
+          onclick={handleSend}
+          disabled={_isDisabled}
+          class="send-button"
+        ></lightning-button-icon>
+      </div>
+    </div>
+  </lightning-card>
 </template>

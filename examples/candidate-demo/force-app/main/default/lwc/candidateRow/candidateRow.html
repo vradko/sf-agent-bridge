@@ -1,0 +1,22 @@
+<template>
+  <tr class={rowClass}>
+    <td>{fullName}</td>
+    <td>{candidate.Email__c}</td>
+    <td>{candidate.Country__c}</td>
+    <td>
+      <lightning-badge label={candidate.Stage__c}></lightning-badge>
+    </td>
+    <td>
+      <lightning-formatted-date-time value={candidate.Interview_Date__c}></lightning-formatted-date-time>
+    </td>
+    <td>{candidate.Years_Experience__c}</td>
+    <td>
+      <lightning-button-icon
+        icon-name="utility:preview"
+        alternative-text="View"
+        onclick={handleViewClick}
+        size="small"
+      ></lightning-button-icon>
+    </td>
+  </tr>
+</template>

@@ -1,0 +1,202 @@
+{
+  "records": [
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand1Ref" },
+      "First_Name__c": "Bob",
+      "Last_Name__c": "Johnson",
+      "Email__c": "bob.johnson@email.com",
+      "Phone__c": "+1-555-0102",
+      "Stage__c": "Interview",
+      "Country__c": "United States",
+      "Interview_Date__c": "2026-07-12",
+      "Years_Experience__c": 8,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand2Ref" },
+      "First_Name__c": "Klaus",
+      "Last_Name__c": "Mueller",
+      "Email__c": "klaus.mueller@email.com",
+      "Phone__c": "+49-30-5550-171",
+      "Stage__c": "Interview",
+      "Country__c": "Germany",
+      "Interview_Date__c": "2026-07-13",
+      "Years_Experience__c": 10,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand3Ref" },
+      "First_Name__c": "Priya",
+      "Last_Name__c": "Sharma",
+      "Email__c": "priya.sharma@email.com",
+      "Phone__c": "+91-98-2033-4455",
+      "Stage__c": "Interview",
+      "Country__c": "India",
+      "Interview_Date__c": "2026-07-14",
+      "Years_Experience__c": 6,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand4Ref" },
+      "First_Name__c": "Marta",
+      "Last_Name__c": "Kowalska",
+      "Email__c": "marta.kowalska@email.com",
+      "Phone__c": "+48-22-555-0134",
+      "Stage__c": "Interview",
+      "Country__c": "Poland",
+      "Interview_Date__c": "2026-07-17",
+      "Years_Experience__c": 4,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand5Ref" },
+      "First_Name__c": "Oksana",
+      "Last_Name__c": "Shevchenko",
+      "Email__c": "oksana.shevchenko@email.com",
+      "Phone__c": "+380-44-555-0177",
+      "Stage__c": "Interview",
+      "Country__c": "Ukraine",
+      "Interview_Date__c": "2026-07-21",
+      "Years_Experience__c": 7,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand6Ref" },
+      "First_Name__c": "Emile",
+      "Last_Name__c": "Laurent",
+      "Email__c": "emile.laurent@email.com",
+      "Phone__c": "+33-1-5555-0166",
+      "Stage__c": "Interview",
+      "Country__c": "France",
+      "Interview_Date__c": "2026-07-28",
+      "Years_Experience__c": 5,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand7Ref" },
+      "First_Name__c": "Emma",
+      "Last_Name__c": "Clarke",
+      "Email__c": "emma.clarke@email.com",
+      "Phone__c": "+44-20-5555-0188",
+      "Stage__c": "Interview",
+      "Country__c": "United Kingdom",
+      "Interview_Date__c": "2026-08-03",
+      "Years_Experience__c": 9,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand8Ref" },
+      "First_Name__c": "Lukas",
+      "Last_Name__c": "de Vries",
+      "Email__c": "lukas.devries@email.com",
+      "Phone__c": "+31-20-555-0142",
+      "Stage__c": "Offer",
+      "Country__c": "Netherlands",
+      "Interview_Date__c": "2026-07-15",
+      "Years_Experience__c": 12,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand9Ref" },
+      "First_Name__c": "Sofia",
+      "Last_Name__c": "Rossi",
+      "Email__c": "sofia.rossi@email.com",
+      "Phone__c": "+39-06-5555-0123",
+      "Stage__c": "Screening",
+      "Country__c": "Italy",
+      "Years_Experience__c": 5,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand10Ref" },
+      "First_Name__c": "Jane",
+      "Last_Name__c": "Smith",
+      "Email__c": "jane.smith@email.com",
+      "Stage__c": "Screening",
+      "Country__c": "United States",
+      "Years_Experience__c": 3,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand11Ref" },
+      "First_Name__c": "Alice",
+      "Last_Name__c": "Williams",
+      "Email__c": "alice.w@email.com",
+      "Stage__c": "New",
+      "Country__c": "Canada",
+      "Years_Experience__c": 2,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand12Ref" },
+      "First_Name__c": "Mike",
+      "Last_Name__c": "Wilson",
+      "Email__c": "mike.w@email.com",
+      "Phone__c": "+61-2-5550-1044",
+      "Stage__c": "Rejected",
+      "Country__c": "Australia",
+      "Years_Experience__c": 3,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand13Ref" },
+      "First_Name__c": "Diego",
+      "Last_Name__c": "Santos",
+      "Email__c": "diego.santos@email.com",
+      "Stage__c": "Hired",
+      "Country__c": "Brazil",
+      "Years_Experience__c": 11,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand14Ref" },
+      "First_Name__c": "Yuki",
+      "Last_Name__c": "Tanaka",
+      "Email__c": "yuki.tanaka@email.com",
+      "Stage__c": "New",
+      "Country__c": "Japan",
+      "Years_Experience__c": 1,
+      "Account__c": "@AcctAcmeRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand15Ref" },
+      "First_Name__c": "Tom",
+      "Last_Name__c": "Brown",
+      "Email__c": "tom.brown@email.com",
+      "Stage__c": "Offer",
+      "Country__c": "United States",
+      "Years_Experience__c": 7,
+      "Account__c": "@AcctGlobalRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand16Ref" },
+      "First_Name__c": "Sarah",
+      "Last_Name__c": "Davis",
+      "Email__c": "sarah.davis@email.com",
+      "Stage__c": "Hired",
+      "Country__c": "United States",
+      "Years_Experience__c": 10,
+      "Account__c": "@AcctGlobalRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand17Ref" },
+      "First_Name__c": "Ingrid",
+      "Last_Name__c": "Weber",
+      "Email__c": "ingrid.weber@email.com",
+      "Stage__c": "Screening",
+      "Country__c": "Germany",
+      "Years_Experience__c": 6,
+      "Account__c": "@AcctGlobalRef"
+    },
+    {
+      "attributes": { "type": "Candidate__c", "referenceId": "Cand18Ref" },
+      "First_Name__c": "Raj",
+      "Last_Name__c": "Patel",
+      "Email__c": "raj.patel@email.com",
+      "Stage__c": "New",
+      "Country__c": "India",
+      "Years_Experience__c": 4,
+      "Account__c": "@AcctGlobalRef"
+    }
+  ]
+}
