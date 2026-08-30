@@ -56,7 +56,9 @@ export const Timeout = {
   CHAT: 240000,
   IDEMPOTENCY_TTL: 300000,
   // Anti-clickjacking: Approve stays disabled this long after the modal (re)renders
-  APPROVAL_ARM: 700
+  APPROVAL_ARM: 700,
+  // debounce so a burst of widget registrations republishes the tool set once
+  WEBMCP_SYNC: 400
 };
 
 // ── Param Types for Validation ─────────────────────────────────────
