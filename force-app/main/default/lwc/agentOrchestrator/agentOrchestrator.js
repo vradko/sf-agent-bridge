@@ -10,6 +10,7 @@ import {
   generateId,
   getTabId
 } from 'c/agentBridgeUtils';
+import AgentWebMcpAdapter from 'c/agentWebMcpAdapter';
 
 const MAX_APPROVAL_VALUE_LENGTH = 500;
 
@@ -61,6 +62,7 @@ export default class AgentOrchestrator extends LightningElement {
   _previousFocus = null;
   _duplicateProbe = null;
   _duplicateTimerId = null;
+  _webmcp = null;
 
   get _showWarning() {
     return this._duplicateWarning && !this._warningDismissed;
@@ -172,6 +174,11 @@ export default class AgentOrchestrator extends LightningElement {
     });
     this._listenForHandshake();
     this._checkForDuplicates();
+    this._webmcp = new AgentWebMcpAdapter({
+      getRegistry: () => this._registry,
+      execute: (payload) => this._execute(payload)
+    });
+    this._webmcp.scheduleSync();
   }
 
   disconnectedCallback() {
@@ -209,6 +216,8 @@ export default class AgentOrchestrator extends LightningElement {
       clearTimeout(cached.timeoutId);
     }
     this._idempotencyCache.clear();
+    this._webmcp?.teardown();
+    this._webmcp = null;
   }
 
   // ── Handshake (Agent → Orchestrator via DOM events) ─────────────
@@ -298,9 +307,11 @@ export default class AgentOrchestrator extends LightningElement {
         this._broadcast(InternalAction.REGISTER_ACK, {
           componentId: data.componentId
         });
+        this._webmcp?.scheduleSync();
         break;
       case InternalAction.UNREGISTER:
         this._registry.delete(data.componentId);
+        this._webmcp?.scheduleSync();
         break;
       case InternalAction.RESULT:
         this._resolveResult(data);
