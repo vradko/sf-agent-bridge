@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Errors thrown by Apex (`{ body: { message } }`) reach the agent with their message instead of `[object Object]` (new `describeError` in `agentBridgeUtils`).
+- The approval dialog no longer sits on a full-height white column: SLDS gives `.slds-modal__container` full height and vertical padding, so the container now shrinks to the dialog.
+
 ## 1.2.0
 
 ### Breaking

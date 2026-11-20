@@ -191,6 +191,21 @@ describe('AgentBridgeMixin', () => {
       const result = channel._messages.find((m) => m.action === InternalAction.RESULT && m.correlationId === 'c5');
       expect(result.result).toEqual({ id: '3', name: 'Item C' });
     });
+
+    it('reports Apex errors by their body message, not "[object Object]"', async () => {
+      await channel._receive({
+        type: MessageType.INTERNAL,
+        action: InternalAction.EXECUTE,
+        componentId,
+        correlationId: 'c6',
+        actionName: 'addItem',
+        params: { name: 'apex-fail' },
+        orchestratorId: ORCH_ID
+      });
+      const result = channel._messages.find((m) => m.action === InternalAction.RESULT && m.correlationId === 'c6');
+      expect(result.error).toBe(true);
+      expect(result.errorMessage).toBe('Not deleted: a01 is Jane Smith, not Mike Wilson.');
+    });
   });
 
   describe('Orchestrator trust (approval-gate bypass protection)', () => {
