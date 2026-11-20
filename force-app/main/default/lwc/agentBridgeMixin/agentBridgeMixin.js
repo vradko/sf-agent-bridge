@@ -5,7 +5,8 @@ import {
   generateId,
   getTabId,
   validateParams,
-  stableComponentId
+  stableComponentId,
+  describeError
 } from 'c/agentBridgeUtils';
 
 const AgentBridgeMixin = (Base) =>
@@ -164,7 +165,7 @@ const AgentBridgeMixin = (Base) =>
           componentId: this.agentComponentId,
           orchestratorId: this._orchestratorId,
           error: true,
-          errorMessage: error?.message || String(error || 'Unknown error')
+          errorMessage: describeError(error)
         });
       }
     }

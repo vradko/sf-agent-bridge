@@ -40,18 +40,18 @@
         <p class="slds-text-body_small slds-m-bottom_small slds-text-color_weak">Filtered: {filterSummary}</p>
       </template>
 
-      <!-- Loading -->
-      <template if:true={_loading}>
-        <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
-      </template>
-
       <!-- Error -->
       <template if:true={hasError}>
         <div class="slds-text-color_error slds-m-bottom_small">{_error}</div>
       </template>
 
-      <!-- Table with child row components -->
-      <template if:false={_loading}>
+      <!-- Table with child row components. Rows stay mounted while a reload is in flight (the
+           spinner overlays them), so row widgets keep their bridge registration and WebMCP tools. -->
+      <div class="table-area">
+        <template if:true={_loading}>
+          <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+        </template>
+
         <template if:true={hasCandidates}>
           <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_striped">
             <thead>
@@ -78,12 +78,12 @@
           </table>
         </template>
 
-        <template if:false={hasCandidates}>
+        <template if:true={showEmptyState}>
           <p class="slds-text-body_regular slds-text-color_weak slds-p-around_medium slds-align_absolute-center">
             No candidates found.
           </p>
         </template>
-      </template>
+      </div>
 
       <p class="slds-text-body_small slds-text-color_weak slds-m-top_small">
         Agent Bridge Component ID: {agentComponentId}

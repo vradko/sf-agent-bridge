@@ -21,7 +21,8 @@ sf project deploy start --target-org your-org
 # 2. Assign permissions
 sf org assign permset --name Agent_Bridge_User --target-org your-org
 
-# 3. Import test data (accounts + candidates via a single plan)
+# 3. Import test data (accounts + candidates via a single plan); interview dates are
+#    moved so the earliest is three days out
 ./examples/candidate-demo/scripts/data/import-demo-data.sh your-org
 ```
 
@@ -63,4 +64,9 @@ Agent: "Update his notes"
 
 Agent: "Go back to the account"
 → execute navigateToAccount
+
+Agent: "Delete Mike Wilson"
+→ execute getCandidates { searchTerm: 'Mike Wilson' }
+→ execute deleteCandidate { candidateId: '...', candidateName: 'Mike Wilson' }
+(dangerous: the approval dialog shows the name; Apex refuses the delete if it is not this record)
 ```

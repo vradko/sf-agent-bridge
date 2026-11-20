@@ -33,6 +33,11 @@ export default class TestWidget extends AgentBridgeMixin(LightningElement) {
       case 'getItems':
         return this._items;
       case 'addItem': {
+        if (params.name === 'apex-fail') {
+          // the shape @salesforce/apex rejects with
+          // eslint-disable-next-line no-throw-literal
+          throw { body: { message: 'Not deleted: a01 is Jane Smith, not Mike Wilson.' }, status: 400 };
+        }
         const item = { id: String(this._items.length + 1), name: params.name };
         this._items.push(item);
         return item;

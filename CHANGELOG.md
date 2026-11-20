@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Errors thrown by Apex (`{ body: { message } }`) reach the agent with their message instead of `[object Object]` (new `describeError` in `agentBridgeUtils`).
+- The approval dialog no longer sits on a full-height white column: SLDS gives `.slds-modal__container` full height and vertical padding, so the container now shrinks to the dialog.
+
+### Candidate demo
+
+- Rows stay mounted while the table reloads (the spinner overlays them). Row widgets no longer unregister for the length of every Apex call, so their WebMCP tools stay published.
+- `getCandidates` search matches full names: every word has to match the first or the last name ("Mike Wilson").
+- `deleteCandidate` takes `candidateName`. The approval dialog shows it, and Apex refuses the delete when it is not the record's name.
+- `import-demo-data.sh` moves interview dates so the earliest is three days out (order and gaps kept); `setup-demo-org.sh` sets the admin user's locale to en_GB.
+
 ## 1.2.0
 
 ### Breaking

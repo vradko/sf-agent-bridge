@@ -1,0 +1,5 @@
+/* The reload spinner overlays the table instead of replacing it (see the template). */
+.table-area {
+  position: relative;
+  min-height: 3rem;
+}

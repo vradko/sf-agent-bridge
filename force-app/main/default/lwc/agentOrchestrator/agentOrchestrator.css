@@ -33,10 +33,15 @@
   background: rgba(0, 0, 0, 0.5);
 }
 
+/* SLDS makes the container full-height with vertical padding; with a white
+   background that paints a white column behind the dialog. Shrink it to the
+   dialog itself — .approval-modal (flex) centres it. */
 .approval-modal .slds-modal__container {
   background: white;
   border-radius: 0.25rem;
   max-width: 480px;
   width: 90%;
+  height: auto;
+  padding: 0;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }

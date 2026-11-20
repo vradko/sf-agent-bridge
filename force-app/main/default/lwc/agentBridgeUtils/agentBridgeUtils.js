@@ -198,6 +198,16 @@ function describeType(value) {
   return typeof value;
 }
 
+// Apex calls reject with { body: { message } } (or a list of those), not an Error, so
+// error.message alone would reach the agent as "[object Object]".
+export function describeError(error) {
+  if (Array.isArray(error?.body)) {
+    const messages = error.body.map((entry) => entry?.message).filter(Boolean);
+    if (messages.length) return messages.join('; ');
+  }
+  return error?.body?.message || error?.message || String(error || 'Unknown error');
+}
+
 export function isSameTab(messageTabId, localTabId) {
   return !messageTabId || !localTabId || messageTabId === localTabId;
 }

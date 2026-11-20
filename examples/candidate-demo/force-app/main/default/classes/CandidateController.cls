@@ -46,10 +46,28 @@ public with sharing class CandidateController {
     if (String.isNotBlank(stage)) {
       query += ' AND Stage__c = :stage';
     }
+    // Every word has to match the first or the last name, so a full name ("Mike Wilson") finds
+    // the person. Bind variables are escaped by Salesforce; manual escaping would break names
+    // such as O'Connor.
+    String word1;
+    String word2;
+    String word3;
     if (String.isNotBlank(searchTerm)) {
-      // Bind variables are escaped by Salesforce. Manual escaping would break names such as O'Connor.
-      searchTerm = '%' + searchTerm + '%';
-      query += ' AND (First_Name__c LIKE :searchTerm OR Last_Name__c LIKE :searchTerm)';
+      List<String> words = searchTerm.trim().split('\\s+');
+      word1 = '%' + words[0] + '%';
+      query += ' AND (First_Name__c LIKE :word1 OR Last_Name__c LIKE :word1)';
+      if (words.size() > 1) {
+        word2 = '%' + words[1] + '%';
+        query += ' AND (First_Name__c LIKE :word2 OR Last_Name__c LIKE :word2)';
+      }
+      if (words.size() > 2) {
+        List<String> rest = new List<String>();
+        for (Integer i = 2; i < words.size(); i++) {
+          rest.add(words[i]);
+        }
+        word3 = '%' + String.join(rest, ' ') + '%';
+        query += ' AND (First_Name__c LIKE :word3 OR Last_Name__c LIKE :word3)';
+      }
     }
     if (countries != null && !countries.isEmpty()) {
       query += ' AND Country__c IN :countries';
@@ -266,10 +284,42 @@ public with sharing class CandidateController {
     ];
   }
 
+  // expectedName is the name the approval dialog showed the human. When it is given and does
+  // not match the record, nothing is deleted: nobody approves one name and loses another.
   @AuraEnabled
-  public static void deleteCandidate(Id candidateId) {
-    Candidate__c candidate = fetchForUpdate(candidateId);
+  public static void deleteCandidate(Id candidateId, String expectedName) {
+    List<Candidate__c> rows = [
+      SELECT Id, First_Name__c, Last_Name__c
+      FROM Candidate__c
+      WHERE Id = :candidateId
+      WITH USER_MODE
+      LIMIT 1
+    ];
+    if (rows.isEmpty()) {
+      throw new AuraHandledException('Candidate not found or not accessible: ' + candidateId);
+    }
+    Candidate__c candidate = rows[0];
+    if (String.isNotBlank(expectedName)) {
+      String actualName = ((candidate.First_Name__c ?? '') + ' ' + (candidate.Last_Name__c ?? '')).trim();
+      if (nameKey(actualName) != nameKey(expectedName)) {
+        throw new AuraHandledException(
+          'Not deleted: ' + candidateId + ' is ' + actualName + ', not ' + expectedName.trim() + '.'
+        );
+      }
+    }
     delete as user candidate;
+  }
+
+  // Case-, comma- and order-insensitive: "Mike Wilson" matches "wilson, mike".
+  private static String nameKey(String name) {
+    List<String> words = new List<String>();
+    for (String word : name.toLowerCase().replace(',', ' ').trim().split('\\s+')) {
+      if (String.isNotBlank(word)) {
+        words.add(word);
+      }
+    }
+    words.sort();
+    return String.join(words, ' ');
   }
 
   // Single-row lookups throw a raw QueryException on zero rows; surface a clear
