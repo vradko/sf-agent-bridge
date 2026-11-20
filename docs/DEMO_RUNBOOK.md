@@ -11,7 +11,7 @@ Every step has a **fallback** — if the agentic path fails on stage, paste the 
 > blocked → missing-tab execution returns an immediate error → idempotent create
 > deduplicates → unknown-component returns instant not-found error → scoped chat loop.
 > Demo data: 18 candidates across Acme Corporation (14) + Global Tech (4);
-> countries, interview dates (2026-07-12 … 2026-08-03), years of experience.
+> countries, interview dates (moved at import so the earliest is three days out), years of experience.
 > Account Ids change on every data reimport — `connect.js` resolves by name,
 > and the visible `Agent Bridge Component ID` changes on every page load:
 > always `discover` at demo time, never hard-code ids.
@@ -153,7 +153,7 @@ Fallback:
 const cand = (await sfBridgeExecute(mgr.componentId, 'getCandidates', {}, hs.tabId)).find((c) =>
   c.name.includes('Wilson')
 );
-await sfBridgeExecute(mgr.componentId, 'deleteCandidate', { candidateId: cand.id }, hs.tabId);
+await sfBridgeExecute(mgr.componentId, 'deleteCandidate', { candidateId: cand.id, candidateName: cand.name }, hs.tabId);
 // modal appears; promise resolves on Approve, rejects on Reject
 ```
 

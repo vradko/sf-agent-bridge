@@ -181,9 +181,73 @@ private class CandidateControllerTest {
   @isTest
   static void testDeleteCandidate() {
     Candidate__c cand = [SELECT Id FROM Candidate__c WHERE First_Name__c = 'Alice' LIMIT 1];
-    CandidateController.deleteCandidate(cand.Id);
+    CandidateController.deleteCandidate(cand.Id, null);
     List<Candidate__c> remaining = [SELECT Id FROM Candidate__c WHERE Id = :cand.Id];
     System.assertEquals(0, remaining.size());
+  }
+
+  @isTest
+  static void testDeleteCandidateWithMatchingName() {
+    Candidate__c cand = [SELECT Id FROM Candidate__c WHERE First_Name__c = 'Jane' LIMIT 1];
+    CandidateController.deleteCandidate(cand.Id, '  smith, JANE ');
+    System.assertEquals(0, [SELECT COUNT() FROM Candidate__c WHERE Id = :cand.Id], 'Name matches in any order or case');
+  }
+
+  @isTest
+  static void testDeleteCandidateNameMismatchKeepsRecord() {
+    Candidate__c cand = [SELECT Id FROM Candidate__c WHERE First_Name__c = 'Jane' LIMIT 1];
+    Boolean refused = false;
+    try {
+      CandidateController.deleteCandidate(cand.Id, 'Bob Johnson');
+    } catch (AuraHandledException e) {
+      refused = true;
+    }
+    System.assert(refused, 'A name that is not the record must be refused');
+    System.assertEquals(1, [SELECT COUNT() FROM Candidate__c WHERE Id = :cand.Id], 'The record must survive');
+  }
+
+  @isTest
+  static void testFilterByFullName() {
+    Account acc = [SELECT Id FROM Account LIMIT 1];
+    List<Candidate__c> exact = CandidateController.filterCandidates(acc.Id, null, 'Jane Smith', null, null, null, null);
+    System.assertEquals(1, exact.size(), 'A full name should find the person');
+    List<Candidate__c> reversed = CandidateController.filterCandidates(
+      acc.Id,
+      null,
+      '  smith   jane ',
+      null,
+      null,
+      null,
+      null
+    );
+    System.assertEquals(1, reversed.size(), 'Word order, case and spacing should not matter');
+    List<Candidate__c> mixed = CandidateController.filterCandidates(
+      acc.Id,
+      null,
+      'Jane Johnson',
+      null,
+      null,
+      null,
+      null
+    );
+    System.assertEquals(0, mixed.size(), 'Every word has to match the same candidate');
+
+    insert new Candidate__c(
+      First_Name__c = 'Lukas',
+      Last_Name__c = 'de Vries',
+      Stage__c = 'Offer',
+      Account__c = acc.Id
+    );
+    List<Candidate__c> threeWords = CandidateController.filterCandidates(
+      acc.Id,
+      null,
+      'Lukas de Vries',
+      null,
+      null,
+      null,
+      null
+    );
+    System.assertEquals(1, threeWords.size(), 'A multi-word last name should match');
   }
 
   @isTest

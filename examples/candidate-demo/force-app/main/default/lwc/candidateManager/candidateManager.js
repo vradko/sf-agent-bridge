@@ -41,7 +41,12 @@ export default class CandidateManager extends NavigationMixin(AgentBridgeMixin(L
             description: 'Filter by stage',
             enum: ['New', 'Screening', 'Interview', 'Offer', 'Hired', 'Rejected']
           },
-          { name: 'searchTerm', type: 'string', required: false, description: 'Search by name' },
+          {
+            name: 'searchTerm',
+            type: 'string',
+            required: false,
+            description: 'Search by first, last or full name'
+          },
           {
             name: 'countries',
             type: 'array',
@@ -160,7 +165,16 @@ export default class CandidateManager extends NavigationMixin(AgentBridgeMixin(L
         name: 'deleteCandidate',
         description: 'Permanently deletes a candidate',
         dangerous: true,
-        params: [{ name: 'candidateId', type: 'string', required: true, description: 'Record Id' }],
+        params: [
+          { name: 'candidateId', type: 'string', required: true, description: 'Record Id' },
+          {
+            name: 'candidateName',
+            type: 'string',
+            required: true,
+            description:
+              "The candidate's full name. The approval dialog shows it to the user, and the delete is refused if it does not match the record."
+          }
+        ],
         returns: { type: 'object', description: 'Deletion result' }
       }
     ];
@@ -177,6 +191,10 @@ export default class CandidateManager extends NavigationMixin(AgentBridgeMixin(L
 
   get hasCandidates() {
     return this._candidates.length > 0;
+  }
+
+  get showEmptyState() {
+    return !this._loading && !this.hasCandidates;
   }
 
   get stageOptions() {
@@ -417,8 +435,9 @@ export default class CandidateManager extends NavigationMixin(AgentBridgeMixin(L
     return mapping;
   }
 
-  async _deleteCandidate({ candidateId }) {
-    await deleteCandidateApex({ candidateId });
+  // candidateName is what the approval dialog showed; Apex refuses the delete if it is not this record.
+  async _deleteCandidate({ candidateId, candidateName }) {
+    await deleteCandidateApex({ candidateId, expectedName: candidateName || null });
     await this._loadCandidates();
     return { success: true };
   }
