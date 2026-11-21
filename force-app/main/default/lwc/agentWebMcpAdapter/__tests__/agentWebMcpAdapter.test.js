@@ -53,11 +53,13 @@ describe('paramsToJsonSchema', () => {
     expect(schema.properties.minExperience).toEqual({ type: 'number', minimum: 0, maximum: 40 });
   });
 
-  it('adds a required componentId only when several instances share the tool', () => {
-    expect(paramsToJsonSchema([], ['one']).properties.componentId).toBeUndefined();
-    const shared = paramsToJsonSchema([], ['one', 'two']);
-    expect(shared.properties.componentId.enum).toEqual(['one', 'two']);
-    expect(shared.required).toContain('componentId');
+  it('adds a required plain-string componentId to per-instance tools, never an enum', () => {
+    expect(paramsToJsonSchema([]).properties.componentId).toBeUndefined();
+    const rows = paramsToJsonSchema([], { label: 'CandidateRow', stableIds: true });
+    expect(rows.properties.componentId.type).toBe('string');
+    expect(rows.properties.componentId.enum).toBeUndefined();
+    expect(rows.properties.componentId.description).toContain('stable:CandidateRow:<key>');
+    expect(rows.required).toContain('componentId');
   });
 
   it('ignores malformed parameter definitions', () => {
@@ -187,18 +189,100 @@ describe('AgentWebMcpAdapter', () => {
     const tool = registered.find((t) => t.name === 'sf-candidate-manager-get-items');
     registry.clear();
     const result = await tool.execute('{}');
-    expect(result.content[0].text).toContain('no longer on the page');
+    expect(result.content[0].text).toContain('not on the page');
     expect(execute).not.toHaveBeenCalled();
   });
 
-  it('replaces previously published tools on re-sync', async () => {
+  const signalOf = (name) =>
+    global.document.modelContext.registerTool.mock.calls.find(([tool]) => tool.name === name)[1].signal;
+
+  it('keeps unchanged tools registered on re-sync', async () => {
     const adapter = build();
     await adapter.sync();
-    const aborted = [];
-    for (const [name] of adapter._controllers) aborted.push(name);
     await adapter.sync();
-    expect(adapter.publishedToolNames.sort()).toEqual(aborted.sort());
-    expect(global.document.modelContext.registerTool).toHaveBeenCalledTimes(4);
+    expect(global.document.modelContext.registerTool).toHaveBeenCalledTimes(2);
+    expect(signalOf('sf-candidate-manager-get-items').aborted).toBe(false);
+    expect(signalOf('sf-candidate-manager-delete-item').aborted).toBe(false);
+  });
+
+  it('replaces only the tool whose definition changed', async () => {
+    const adapter = build();
+    await adapter.sync();
+    const oldDelete = signalOf('sf-candidate-manager-delete-item');
+    registry.set('mgr', {
+      label: 'CandidateManager',
+      actions: [GET_ITEMS, { ...DELETE_ITEM, description: 'Deletes an item for good' }]
+    });
+    await adapter.sync();
+    expect(oldDelete.aborted).toBe(true);
+    expect(signalOf('sf-candidate-manager-get-items').aborted).toBe(false);
+    expect(global.document.modelContext.registerTool.mock.calls.map(([tool]) => tool.name)).toEqual([
+      'sf-candidate-manager-get-items',
+      'sf-candidate-manager-delete-item',
+      'sf-candidate-manager-delete-item'
+    ]);
+  });
+
+  it('keeps a row tool unchanged across many, one and zero rows', async () => {
+    const row = (key) => [`stable:CandidateRow:${key}`, { label: 'CandidateRow', actions: [GET_ITEMS] }];
+    registry = registryOf([['mgr', { label: 'CandidateManager', actions: [GET_ITEMS] }], row('a'), row('b'), row('c')]);
+    const adapter = build();
+    await adapter.sync();
+    registry.delete('stable:CandidateRow:b');
+    registry.delete('stable:CandidateRow:c');
+    await adapter.sync();
+    registry.delete('stable:CandidateRow:a');
+    await adapter.sync();
+    expect(global.document.modelContext.registerTool).toHaveBeenCalledTimes(2);
+    expect(adapter.publishedToolNames.sort()).toEqual(['sf-candidate-manager-get-items', 'sf-candidate-row-get-items']);
+
+    const rowTool = registered.find((tool) => tool.name === 'sf-candidate-row-get-items');
+    expect(rowTool.inputSchema.properties.componentId.enum).toBeUndefined();
+    const gone = await rowTool.execute({ componentId: 'stable:CandidateRow:a' });
+    expect(gone.content[0].text).toContain('not on the page');
+    expect(execute).not.toHaveBeenCalled();
+
+    registry.set(...row('a'));
+    await rowTool.execute({ componentId: 'stable:CandidateRow:a' });
+    expect(execute).toHaveBeenCalledWith({ componentId: 'stable:CandidateRow:a', actionName: 'getItems', params: {} });
+  });
+
+  it('asks for a componentId on per-instance tools', async () => {
+    registry = registryOf([['stable:CandidateRow:a', { label: 'CandidateRow', actions: [GET_ITEMS] }]]);
+    const adapter = build();
+    await adapter.sync();
+    const result = await registered[0].execute({});
+    expect(result.content[0].text).toContain('componentId is required');
+    expect(execute).not.toHaveBeenCalled();
+  });
+
+  it('drops tools of departed components once the page changes', async () => {
+    let path = '/lightning/r/Account/001/view';
+    registry = registryOf([['stable:CandidateRow:a', { label: 'CandidateRow', actions: [GET_ITEMS] }]]);
+    const adapter = new AgentWebMcpAdapter({ getRegistry: () => registry, execute, getPath: () => path });
+    await adapter.sync();
+    registry.clear();
+    await adapter.sync();
+    expect(adapter.publishedToolNames).toEqual(['sf-candidate-row-get-items']);
+    path = '/lightning/r/Account/002/view';
+    await adapter.sync();
+    expect(signalOf('sf-candidate-row-get-items').aborted).toBe(true);
+    expect(adapter.publishedToolNames).toEqual([]);
+  });
+
+  it('cancels a registration that is still pending on teardown', async () => {
+    let signal;
+    global.document.modelContext.registerTool = jest.fn((tool, options) => {
+      signal = options.signal;
+      return new Promise(() => {});
+    });
+    registry = registryOf([['mgr', { label: 'CandidateManager', actions: [GET_ITEMS] }]]);
+    const adapter = build();
+    adapter.sync();
+    await flush();
+    adapter.teardown();
+    expect(signal.aborted).toBe(true);
+    expect(adapter.publishedToolNames).toEqual([]);
   });
 
   it('keeps going when one tool fails to publish', async () => {

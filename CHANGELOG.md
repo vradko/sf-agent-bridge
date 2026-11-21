@@ -6,6 +6,8 @@
 
 - Errors thrown by Apex (`{ body: { message } }`) reach the agent with their message instead of `[object Object]` (new `describeError` in `agentBridgeUtils`).
 - The approval dialog no longer sits on a full-height white column: SLDS gives `.slds-modal__container` full height and vertical padding, so the container now shrinks to the dialog.
+- WebMCP tools keep their registration while the page changes. The adapter used to abort and re-register every tool after any registry change (a filter, a discover, a row leaving), so agent hosts that hold a tool between listing and calling it — Codex's built-in browser, for one — saw "stale" tools. It now reconciles tool by tool: unchanged tools stay, changed ones are replaced, new ones added. Abort controllers are tracked before `registerTool` settles, so teardown also cancels pending registrations.
+- Per-row tools have a stable schema: `componentId` is a required string instead of an enum of the rows on screen (which changed with every filter and disappeared at one row). Agents get ids from discover or a listing action such as `getRowComponents`; the adapter checks at call time that the component is on the page and supports the action. Tools whose components all left (a filter with no rows) stay published until the page URL changes.
 
 ### Candidate demo
 
