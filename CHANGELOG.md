@@ -15,6 +15,7 @@
 - `getCandidates` search matches full names: every word has to match the first or the last name ("Mike Wilson").
 - `deleteCandidate` takes `candidateName`. The approval dialog shows it, and Apex refuses the delete when it is not the record's name.
 - `import-demo-data.sh` moves interview dates so the earliest is three days out (order and gaps kept); `setup-demo-org.sh` sets the admin user's locale to en_GB.
+- The Account page is one column without Agent Chat: agents drive it from outside (Claude Code, a WebMCP host). The chat widget is still on the Candidate record page and the `Agent Bridge Test` app page.
 
 ## 1.2.0
 

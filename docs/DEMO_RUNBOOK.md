@@ -168,6 +168,11 @@ node scripts/chat-bridge.js --port 9444
 # wait for the log line:  [chat-bridge] Orchestrator tabId: ...
 ```
 
+> **Agent Chat is no longer on the Account page** (removed 2026-11-20; the page is now one column, driven by
+> agents from outside). To run this step, put `c:agentChat` back on the page in Lightning App Builder, or
+> deploy the two-column flexipage from commit `e54f9b1`. The widget is still on the Candidate record page and
+> the `Agent Bridge Test` app page, but neither has the candidate table.
+
 In the Agent Chat widget on the page, type:
 
 - `How many candidates are in Interview stage?` → watch the terminal log `[TOOL 1] getCandidates {"stage":"Interview"}` → reply appears in chat AND the table filters live
